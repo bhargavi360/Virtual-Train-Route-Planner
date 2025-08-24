@@ -23,8 +23,3 @@ This project is menu-driven and allows you to create a train route, display it, 
 Clone the repository git clone https://github.com/your-username/virtual-train-route-planner.git cd virtual-train-route-planner
 
 Compile the code g++ train_route.cpp -o train_route
-![Sample Output](./<img width="1683" height="814" alt="Screenshot 2025-08-23 235815" src="https://github.com/user-attachments/assets/b697f6cb-2aea-4dc2-ae4d-f17c73d16bd8" />
-
-
-
-)
