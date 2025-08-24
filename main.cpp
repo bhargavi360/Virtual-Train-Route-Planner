@@ -1,122 +1,106 @@
-#include <iostream>
-#include <string>
+// Virtual Train Route Planner in C++
+// Features:
+// - Doubly linked list for navigation (forward/backward)
+// - Circular linked list for loop routes
+// - Interactive menu-based system
+
+#include <bits/stdc++.h>
 using namespace std;
 
-// Node structure for train station
 struct Station {
     string name;
     Station* next;
     Station* prev;
+    Station(string n) : name(n), next(nullptr), prev(nullptr) {}
 };
 
-// Class for Train Route
 class TrainRoute {
+private:
     Station* head;
+    Station* tail;
+    Station* current;
     bool isCircular;
 
 public:
     TrainRoute(bool circular = false) {
-        head = nullptr;
+        head = tail = current = nullptr;
         isCircular = circular;
     }
 
-    // Add station to the route
-    void addStation(string stationName) {
-        Station* newStation = new Station;
-        newStation->name = stationName;
-        newStation->next = nullptr;
-        newStation->prev = nullptr;
-
+    void addStation(string name) {
+        Station* s = new Station(name);
         if (!head) {
-            head = newStation;
-            if (isCircular) {
-                head->next = head;
-                head->prev = head;
-            }
-            return;
+            head = tail = current = s;
+        } else {
+            tail->next = s;
+            s->prev = tail;
+            tail = s;
         }
 
-        Station* temp = head;
+        // If circular, connect tail → head
         if (isCircular) {
-            // Insert before head in circular route
-            Station* tail = head->prev;
-            tail->next = newStation;
-            newStation->prev = tail;
-            newStation->next = head;
-            head->prev = newStation;
-        } else {
-            // Normal doubly linked list append
-            while (temp->next) temp = temp->next;
-            temp->next = newStation;
-            newStation->prev = temp;
+            tail->next = head;
+            head->prev = tail;
         }
     }
 
-    // Display route
-    void displayRoute(int count = 0) {
+    void displayRoute(int rounds = 1) {
         if (!head) {
-            cout << "No stations in the route." << endl;
+            cout << "No stations in route.\n";
             return;
         }
 
-        cout << "\nTrain Route:" << endl;
+        cout << "Train Route: ";
         Station* temp = head;
-        int steps = 0;
+        int count = 0;
         do {
-            cout << "-> " << temp->name << " ";
+            cout << temp->name;
             temp = temp->next;
-            steps++;
-            // for circular routes, prevent infinite loop
-            if (isCircular && count != 0 && steps >= count) break;
-        } while (temp != nullptr && temp != head);
-
-        cout << endl;
+            if (temp != head) cout << " -> ";
+            count++;
+        } while (temp && (isCircular ? count < rounds * routeLength() : temp != nullptr));
+        cout << "\n";
     }
 
-    // Navigate forward through stations
-    void navigateForward(int steps) {
-        if (!head) {
-            cout << "No stations available." << endl;
-            return;
+    void moveForward() {
+        if (!current) return;
+        current = current->next;
+        if (!current) { // reached end of non-circular route
+            current = tail; 
         }
-
-        Station* temp = head;
-        cout << "\nMoving Forward:" << endl;
-        for (int i = 0; i < steps; i++) {
-            cout << "At station: " << temp->name << endl;
-            temp = temp->next;
-            if (!temp) break; // stop if linear route ends
-        }
+        cout << "Now at: " << current->name << "\n";
     }
 
-    // Navigate backward through stations
-    void navigateBackward(int steps) {
-        if (!head) {
-            cout << "No stations available." << endl;
-            return;
+    void moveBackward() {
+        if (!current) return;
+        current = current->prev;
+        if (!current) { // reached start of non-circular route
+            current = head; 
         }
+        cout << "Now at: " << current->name << "\n";
+    }
 
-        // Go to tail first if not circular
+    void showCurrent() {
+        if (!current) cout << "No current station.\n";
+        else cout << "Current Station: " << current->name << "\n";
+    }
+
+    int routeLength() {
+        if (!head) return 0;
+        int len = 0;
         Station* temp = head;
-        if (!isCircular) {
-            while (temp->next) temp = temp->next;
-        } else {
-            temp = head->prev;
-        }
-
-        cout << "\nMoving Backward:" << endl;
-        for (int i = 0; i < steps; i++) {
-            cout << "At station: " << temp->name << endl;
-            temp = temp->prev;
-            if (!temp) break;
-        }
+        do {
+            len++;
+            temp = temp->next;
+        } while (temp && temp != head);
+        return len;
     }
 };
 
-// Main function
 int main() {
+    cout << "=== Virtual Train Route Planner ===\n";
+    cout << "Choose route type:\n1. Linear Route\n2. Circular Route\nEnter choice: ";
     int choice;
-    cout << "Choose Route Type:\n1. Linear Route\n2. Circular Route\n";
     cin >> choice;
 
     bool circular = (choice == 2);
@@ -129,45 +113,34 @@ int main() {
     cout << "Enter station names:\n";
     for (int i = 0; i < n; i++) {
         string name;
-        cin >> name;
+        cin >> ws; // clear whitespace
+        getline(cin, name);
         route.addStation(name);
     }
 
-    int action;
-    do {
-        cout << "\n--- Train Route Menu ---\n";
-        cout << "1. Display Route\n2. Navigate Forward\n3. Navigate Backward\n4. Exit\n";
-        cout << "Enter choice: ";
-        cin >> action;
+    cout << "\nRoute created successfully!\n";
+    route.displayRoute(circular ? 2 : 1);
 
-        switch (action) {
-        case 1:
-            if (circular)
-                route.displayRoute(n * 2); // show extended cycle
-            else
-                route.displayRoute();
-            break;
-        case 2: {
-            int steps;
-            cout << "Enter steps to move forward: ";
-            cin >> steps;
-            route.navigateForward(steps);
-            break;
+    while (true) {
+        cout << "\nOptions:\n";
+        cout << "1. Show Current Station\n";
+        cout << "2. Move Forward\n";
+        cout << "3. Move Backward\n";
+        cout << "4. Show Full Route\n";
+        cout << "5. Exit\n";
+        cout << "Enter choice: ";
+        int opt;
+        cin >> opt;
+
+        switch (opt) {
+            case 1: route.showCurrent(); break;
+            case 2: route.moveForward(); break;
+            case 3: route.moveBackward(); break;
+            case 4: route.displayRoute(circular ? 2 : 1); break;
+            case 5: cout << "Exiting planner...\n"; return 0;
+            default: cout << "Invalid choice!\n";
         }
-        case 3: {
-            int steps;
-            cout << "Enter steps to move backward: ";
-            cin >> steps;
-            route.navigateBackward(steps);
-            break;
-        }
-        case 4:
-            cout << "Exiting..." << endl;
-            break;
-        default:
-            cout << "Invalid option!" << endl;
-        }
-    } while (action != 4);
+    }
 
     return 0;
 }
